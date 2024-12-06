@@ -71,7 +71,7 @@ public class DecoderApp
                     Console.WriteLine("Connection closed or no data received.");
                     break;
                 }
-                var request = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim();  // Use ASCII encoding for incoming data
+                var request = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();  // Use ASCII encoding for incoming data
                 Console.WriteLine($"Received from RR12: {request}");
 
                 if (Regex.IsMatch(request, @"^SETPROTOCOL;<=([0-9.]+)$"))
@@ -83,18 +83,18 @@ public class DecoderApp
                     if (double.Parse(requestedVersion) >= _ProtocolVersion)
                     {
                         Console.WriteLine($"Replied: SETPROTOCOL;{_ProtocolVersion}\r\n");
-                        await stream.WriteAsync(Encoding.ASCII.GetBytes($"SETPROTOCOL;{_ProtocolVersion}\r\n"));
+                        await stream.WriteAsync(Encoding.UTF8.GetBytes($"SETPROTOCOL;{_ProtocolVersion}\r\n"));
                     }
                     else
                     {
                         Console.WriteLine("Responding: ERROR,Unsupported protocol version\r\n");
-                        await stream.WriteAsync(Encoding.ASCII.GetBytes("ERROR,Unsupported protocol version\r\n"));
+                        await stream.WriteAsync(Encoding.UTF8.GetBytes("ERROR,Unsupported protocol version\r\n"));
                     }
                 }
                 else if (request == "GETCONFIG;GENERAL;BOXNAME")
                 {
                     Console.WriteLine($"Responded: GETCONFIG;GENERAL;BOXNAME;Race Result Emulator;{_deviceID}");
-                    await stream.WriteAsync(Encoding.ASCII.GetBytes($"GETCONFIG;GENERAL;BOXNAME;Race Result Emulator;{_deviceID}\r\n"));
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes($"GETCONFIG;GENERAL;BOXNAME;Race Result Emulator;{_deviceID}\r\n"));
                 }
                 else if (request == "GO_LIVE")
                 {
@@ -106,11 +106,33 @@ public class DecoderApp
                     // Get current time and send a sample status update
                     DateTime currentTime = DateTime.UtcNow.AddHours(11);
                     string status = $"GETSTATUS;{currentTime:yyyy-MM-dd};{currentTime:HH:mm:ss.fff};1;10000000;1;1;;;1;100;0;0;0;;1;1;100;1;0;1;0;0;0;0;13.23\r\n";
-                    await stream.WriteAsync(Encoding.ASCII.GetBytes(status));
-                    Console.WriteLine($"Sent status: {status}");
-
-                    // After sending GETSTATUS, continue processing and feeding data to RR12
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes(status));
+                    Console.WriteLine($"Sent status: (status)");
                 }
+                // After sending GETSTATUS, continue processing and feeding data to RR12
+
+                else if (request.StartsWith("SETCONFIG"))
+                {
+                    if (request.Contains("CLIENTMODE"))
+                    {
+                        string status = "SETCONFIG;CLIENTMODE;USEUPLOADGPRSSETTINGS;0";
+                        stream.WriteAsync(Encoding.UTF8.GetBytes(status));
+                        Console.WriteLine($"Sent: {status}");
+                    }
+                    else if (request.Contains("CONNECTION"))
+                    {
+                        string status = "SETCONFIG;CONNECTION;GPRS_MANUAL";
+                        stream.WriteAsync(Encoding.UTF8.GetBytes(status));
+                        Console.WriteLine($"Sent: {status}");
+                    }
+                    else if (request.Contains("UPLOAD"))
+                    {
+                        string status = "SETCONFIG;UPLOAD;CUSTNO;12345";
+                        stream.WriteAsync(Encoding.UTF8.GetBytes(status));
+                        Console.WriteLine($"Sent: {status}");
+                    }
+                }
+                
                 Console.WriteLine("Fails.");
             }
             catch (Exception ex)
@@ -152,13 +174,13 @@ public class DecoderApp
                 var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 if (bytesRead == 0) break;
 
-                _lastRfidData = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim();  // Ensure RFID data is processed in ASCII
+                _lastRfidData = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();  // Ensure RFID data is processed in ASCII
                 Console.WriteLine($"Received RFID data: {_lastRfidData}");
 
                 if (_isOperational && _rr12Client != null && _rr12Client.Connected)
                 {
                     var rr12Stream = _rr12Client.GetStream();
-                    await rr12Stream.WriteAsync(Encoding.ASCII.GetBytes(_lastRfidData));  // Send data to RR12 in ASCII
+                    await rr12Stream.WriteAsync(Encoding.UTF8.GetBytes(_lastRfidData));  // Send data to RR12 in ASCII
                     Console.WriteLine($"Forwarded RFID data to RR12: {_lastRfidData}");
                 }
             }
@@ -195,7 +217,7 @@ public class DecoderApp
                 var rr12Stream = _rr12Client.GetStream();
                 if (!string.IsNullOrEmpty(_lastRfidData))
                 {
-                    await rr12Stream.WriteAsync(Encoding.ASCII.GetBytes(_lastRfidData));  // Use ASCII encoding for continuous data
+                    await rr12Stream.WriteAsync(Encoding.UTF8.GetBytes(_lastRfidData));  // Use ASCII encoding for continuous data
                     Console.WriteLine($"Continuously sent RFID data: {_lastRfidData}");
                 }
                 else
