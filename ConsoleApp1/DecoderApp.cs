@@ -53,6 +53,10 @@ public class DecoderApp
                 Console.WriteLine("RR12 connected.");
                 await HandleRr12Client(_rr12Client);
             }
+
+
+
+
         });
     }
 
@@ -155,6 +159,11 @@ public class DecoderApp
                 Console.WriteLine("Connected to RFID stream.");
                 await HandleRfidStream(_rfidClient);
             }
+
+
+
+
+
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to RFID stream: {ex.Message}. Retrying...");
