@@ -8,7 +8,7 @@ namespace DecoderApp
     {
         static async Task Main(string[] args)
         {
-            var configPath = "appsettings.json";
+            var configPath = "Appsettings.json";
             if (!File.Exists(configPath))
             {
                 Console.WriteLine("Configuration file not found.");
@@ -24,8 +24,11 @@ namespace DecoderApp
                 return;
             }
 
-            var app = new DecoderApp(appSettings);
-            await app.RunAsync();
+            // var app = new DecoderApp(appSettings);
+            // await app.RunAsync();
+            // var app = new DecoderAppAsync();
+            // await DecoderAppAsync.Main();
+            await Task.Run(() => new DecoderAppAsync());
         }
     }
 }
